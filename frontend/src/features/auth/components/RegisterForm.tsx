@@ -75,6 +75,7 @@ export function RegisterForm() {
           id="confirmPassword"
           type="password"
           placeholder="••••••••"
+          data-testid="confirm-password-input"
           {...register("confirmPassword")}
         />
         {errors.confirmPassword && (
