@@ -96,7 +96,12 @@ export function useUpdateTodo() {
 
       return { previousTodos };
     },
-    onError: () => {
+    onError: (_error, _variables, context) => {
+      if (context?.previousTodos) {
+        for (const [queryKey, previousData] of context.previousTodos) {
+          queryClient.setQueryData(queryKey, previousData);
+        }
+      }
       toast.error("Failed to update todo");
     },
     onSettled: () => {
