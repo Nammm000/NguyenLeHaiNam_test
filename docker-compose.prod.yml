@@ -1,0 +1,52 @@
+# Production overlay. Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Differences from the dev file:
+#   - Postgres and Redis are not published to the host (service-network only)
+#   - Redis requires a password (REDIS_PASSWORD)
+#   - Backend reads its configuration from .env (no inline secrets)
+#   - Restart policies for unattended operation
+#
+# Required variables (see .env.example): POSTGRES_USER, POSTGRES_PASSWORD,
+# POSTGRES_DB, REDIS_PASSWORD, JWT_SECRET, VITE_API_URL.
+
+services:
+  postgres:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports: !override []
+    restart: unless-stopped
+
+  redis:
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command:
+      [
+        "sh",
+        "-c",
+        'exec redis-server --requirepass "$REDIS_PASSWORD" --appendonly yes',
+      ]
+    healthcheck:
+      test:
+        ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports: !override []
+    restart: unless-stopped
+
+  backend:
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+    restart: unless-stopped
+
+  frontend:
+    build:
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    restart: unless-stopped
