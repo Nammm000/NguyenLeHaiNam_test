@@ -130,18 +130,9 @@ async def update_existing_todo(
             detail="Not authorized to access this todo",
         )
 
-    update_data = todo_data.model_dump()
+    update_data = todo_data.model_dump(exclude_unset=True)
 
-    if todo_data.completed:
-        todo.completed = todo_data.completed
-
-    # Apply other updates
-    if update_data.get("title") is not None:
-        todo.title = update_data["title"]
-    if "description" in update_data:
-        todo.description = update_data["description"]
-
-    updated_todo = await update_todo(db, todo, {})
+    updated_todo = await update_todo(db, todo, update_data)
     await redis.delete_pattern(f"todos:list:{current_user.id}:*")
 
     return updated_todo
