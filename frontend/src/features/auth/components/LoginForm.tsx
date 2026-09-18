@@ -50,6 +50,7 @@ export function LoginForm() {
           id="email"
           type="email"
           placeholder="you@example.com"
+          data-testid="email-input"
           {...register("email")}
         />
         {errors.email && (
@@ -63,6 +64,7 @@ export function LoginForm() {
           id="password"
           type="password"
           placeholder="••••••••"
+          data-testid="password-input"
           {...register("password")}
         />
         {errors.password && (
@@ -73,6 +75,7 @@ export function LoginForm() {
       <Button
         type="submit"
         className="w-full"
+        data-testid="auth-submit"
         disabled={loginMutation.isPending}
       >
         {loginMutation.isPending ? "Signing in..." : "Sign In"}

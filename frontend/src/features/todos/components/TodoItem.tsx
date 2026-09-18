@@ -13,9 +13,13 @@ interface TodoItemProps {
 
 export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group">
+    <div
+      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
+      data-testid="todo-item"
+    >
       <Checkbox
         id={`todo-${todo.id}`}
+        data-testid="todo-toggle"
         checked={todo.completed}
         onCheckedChange={() => onToggle(todo)}
       />
@@ -23,6 +27,7 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
       <div className="flex-1 min-w-0">
         <label
           htmlFor={`todo-${todo.id}`}
+          data-testid="todo-title"
           className={`text-sm font-medium cursor-pointer ${
             todo.completed ? "line-through text-muted-foreground" : ""
           }`}
@@ -50,6 +55,7 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
           size="icon"
           className="h-8 w-8 text-destructive hover:text-destructive"
           onClick={() => onDelete(todo.id)}
+          data-testid="todo-delete"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>

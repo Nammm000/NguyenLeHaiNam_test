@@ -36,7 +36,7 @@ export function TodoList({ todos }: TodoListProps) {
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-2" data-testid="todo-list">
         {todos.map((todo, index) => (
           <TodoItem
             key={index}
