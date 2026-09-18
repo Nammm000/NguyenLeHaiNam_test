@@ -17,7 +17,7 @@ test("cross-user data isolation", async ({ browser }) => {
   const pageB = await contextB.newPage();
   await registerAndLogin(pageB, uniqueEmail("bob"));
 
-  await expect(pageB.getByText("No todos yet")).toBeVisible();
+  await expect(pageB.getByText("No todos found")).toBeVisible();
   await expect(pageB.locator("[data-testid='todo-item']")).toHaveCount(0);
   await expect(pageB.getByText(secretTitle)).toHaveCount(0);
   await contextB.close();
