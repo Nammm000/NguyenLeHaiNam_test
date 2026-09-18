@@ -6,6 +6,7 @@ from httpx import AsyncClient
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.todos import build_list_cache_key
 from app.models.todo import Todo
 from app.models.user import User
 
@@ -34,7 +35,8 @@ async def test_list_caches_response_and_serves_hits(
 
     first = await client.get("/api/v1/todos", headers=auth_headers_a)
     assert first.status_code == 200
-    assert f"todos:list:{user_a.id}:1:20" in redis_store
+    expected_key = build_list_cache_key(user_a.id, 1, 20, None, None, None, None, None)
+    assert expected_key in redis_store
 
     # Rename behind the API's back: a cache hit must still serve the stale title.
     await db_session.execute(
@@ -62,8 +64,14 @@ async def test_cache_keys_are_user_scoped(
     response_a = await client.get("/api/v1/todos", headers=auth_headers_a)
     response_b = await client.get("/api/v1/todos", headers=auth_headers_b)
 
-    assert f"todos:list:{user_a.id}:1:20" in redis_store
-    assert f"todos:list:{user_b.id}:1:20" in redis_store
+    assert (
+        build_list_cache_key(user_a.id, 1, 20, None, None, None, None, None)
+        in redis_store
+    )
+    assert (
+        build_list_cache_key(user_b.id, 1, 20, None, None, None, None, None)
+        in redis_store
+    )
     assert response_a.json()["total"] == 1
     assert response_b.json()["total"] == 0
 
