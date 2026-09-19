@@ -272,6 +272,27 @@ async def test_tag_writes_invalidate_cache(
     assert user_list_keys(redis_store, user_a.id) == []
 
 
+async def test_tag_rename_invalidates_cache(
+    client: AsyncClient,
+    auth_headers_a: dict,
+    user_a: User,
+    redis_store: dict,
+):
+    tag = await create_tag(client, auth_headers_a, "Work")
+    await create_todo(client, auth_headers_a, "Todo")
+
+    await client.get("/api/v1/todos", headers=auth_headers_a)
+    assert user_list_keys(redis_store, user_a.id)
+
+    response = await client.patch(
+        f"/api/v1/tags/{tag['id']}",
+        json={"name": "Deep Work"},
+        headers=auth_headers_a,
+    )
+    assert response.status_code == 200
+    assert user_list_keys(redis_store, user_a.id) == []
+
+
 async def test_bulk_status_invalidates_cache(
     client: AsyncClient,
     auth_headers_a: dict,

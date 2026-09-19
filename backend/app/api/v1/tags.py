@@ -62,11 +62,12 @@ async def update_existing_tag(
     tag_data: TagUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
 ):
     """Rename or recolor a tag."""
     tag = await _get_owned_tag(db, tag_id, current_user)
     try:
-        return await tag_service.update_tag(
+        updated_tag = await tag_service.update_tag(
             db, tag, tag_data.model_dump(exclude_unset=True)
         )
     except DuplicateTagNameError as exc:
@@ -74,6 +75,10 @@ async def update_existing_tag(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         )
+    # Cached todo lists embed tag chips; drop them so the new name/color
+    # shows up immediately.
+    await redis.delete_pattern(f"todos:list:{current_user.id}:*")
+    return updated_tag
 
 
 @router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
