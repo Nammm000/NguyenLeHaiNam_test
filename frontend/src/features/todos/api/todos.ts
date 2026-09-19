@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
+import type { Tag } from "./tags";
 
 export interface Todo {
   id: string;
@@ -11,6 +12,7 @@ export interface Todo {
   user_id: string;
   created_at: string;
   updated_at: string;
+  tags: Tag[];
 }
 
 interface TodoListResponse {
@@ -31,14 +33,61 @@ interface UpdateTodoRequest {
   completed?: boolean;
 }
 
+export interface TodoFiltersState {
+  status: string;
+  tag_id: string;
+  keyword: string;
+  date_from: string;
+  date_to: string;
+}
 
-export function useTodos(page: number = 1, size: number = 10000) {
+export const EMPTY_FILTERS: TodoFiltersState = {
+  status: "",
+  tag_id: "",
+  keyword: "",
+  date_from: "",
+  date_to: "",
+};
+
+export const TODO_PAGE_SIZE = 10;
+
+export function buildTodosQueryKey(
+  page: number,
+  pageSize: number,
+  filters: TodoFiltersState
+) {
+  return [
+    "todos",
+    {
+      page,
+      page_size: pageSize,
+      status: filters.status,
+      tag_id: filters.tag_id,
+      keyword: filters.keyword,
+      date_from: filters.date_from,
+      date_to: filters.date_to,
+    },
+  ] as const;
+}
+
+export function useTodos(
+  page: number = 1,
+  pageSize: number = TODO_PAGE_SIZE,
+  filters: TodoFiltersState = EMPTY_FILTERS
+) {
   return useQuery({
-    queryKey: ["todos", { page, size }],
+    queryKey: buildTodosQueryKey(page, pageSize, filters),
     queryFn: async (): Promise<TodoListResponse> => {
-      const response = await api.get("/todos", {
-        params: { page, size },
-      });
+      const params: Record<string, string | number> = {
+        page,
+        page_size: pageSize,
+      };
+      if (filters.status) params.status = filters.status;
+      if (filters.tag_id) params.tag_id = filters.tag_id;
+      if (filters.keyword) params.keyword = filters.keyword;
+      if (filters.date_from) params.date_from = filters.date_from;
+      if (filters.date_to) params.date_to = filters.date_to;
+      const response = await api.get("/todos", { params });
       return response.data;
     },
   });
@@ -60,7 +109,6 @@ export function useCreateTodo() {
   });
 }
 
-
 export function useUpdateTodo() {
   return useMutation({
     mutationFn: async ({
@@ -74,15 +122,12 @@ export function useUpdateTodo() {
       return response.data;
     },
     onMutate: async ({ id, data }) => {
-      // Cancel outgoing queries
       await queryClient.cancelQueries({ queryKey: ["todos"] });
 
-      // Snapshot previous value
       const previousTodos = queryClient.getQueriesData<TodoListResponse>({
         queryKey: ["todos"],
       });
 
-      // Optimistically update
       queryClient.setQueriesData<TodoListResponse>({ queryKey: ["todos"] }, (old) =>
         old
           ? {
