@@ -1,17 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_redis
+from app.core.config import settings
+from app.core.cookies import clear_refresh_cookie, set_refresh_cookie
 from app.core.redis import RedisClient
 from app.core.security import create_access_token, create_refresh_token, verify_token
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.user import (
-    RefreshTokenRequest,
-    TokenResponse,
-    UserCreate,
-    UserResponse,
-)
+from app.schemas.user import TokenResponse, UserCreate, UserResponse
 from app.services.auth_service import create_user, get_user_by_email
 
 router = APIRouter()
@@ -22,6 +19,7 @@ router = APIRouter()
 )
 async def register(
     user_data: UserCreate,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     """Register a new user."""
@@ -36,16 +34,17 @@ async def register(
 
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    set_refresh_cookie(response, refresh_token)
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
     )
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
     user_data: UserCreate,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     """Authenticate user and return tokens."""
@@ -67,21 +66,30 @@ async def login(
 
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    set_refresh_cookie(response, refresh_token)
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
     )
 
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
-    request: RefreshTokenRequest,
+    request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     redis: RedisClient = Depends(get_redis),
 ):
-    """Refresh access token using refresh token."""
-    payload = verify_token(request.refresh_token)
+    """Refresh access token using the refresh-token cookie."""
+    refresh_token = request.cookies.get(settings.REFRESH_COOKIE_NAME)
+
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing refresh token",
+        )
+
+    payload = verify_token(refresh_token)
 
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
@@ -91,19 +99,21 @@ async def refresh_token(
 
     user_id = payload.get("sub")
     access_token = create_access_token(data={"sub": user_id})
-    refresh_token = create_refresh_token(data={"sub": user_id})
+    new_refresh_token = create_refresh_token(data={"sub": user_id})
+    set_refresh_cookie(response, new_refresh_token)
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
     )
 
 
 @router.post("/logout")
 async def logout(
+    response: Response,
     current_user: User = Depends(get_current_user),
 ):
     """Logout user."""
+    clear_refresh_cookie(response)
     return {"message": "Successfully logged out"}
 
 

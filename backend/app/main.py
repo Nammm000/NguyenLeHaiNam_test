@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import auth, tags, todos
+from app.core.config import settings
 from app.core.redis import redis_client
 from app.db.session import engine
 
@@ -25,10 +26,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration
+# CORS configuration: credentialed (cookie) requests require explicit origins,
+# browsers reject Access-Control-Allow-Origin: * when credentials are involved
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
