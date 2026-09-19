@@ -47,6 +47,7 @@ export function RegisterForm() {
           id="email"
           type="email"
           placeholder="you@example.com"
+          data-testid="email-input"
           {...register("email")}
         />
         {errors.email && (
@@ -60,6 +61,7 @@ export function RegisterForm() {
           id="password"
           type="password"
           placeholder="••••••••"
+          data-testid="password-input"
           {...register("password")}
         />
         {errors.password && (
@@ -73,6 +75,7 @@ export function RegisterForm() {
           id="confirmPassword"
           type="password"
           placeholder="••••••••"
+          data-testid="confirm-password-input"
           {...register("confirmPassword")}
         />
         {errors.confirmPassword && (
@@ -85,6 +88,7 @@ export function RegisterForm() {
       <Button
         type="submit"
         className="w-full"
+        data-testid="auth-submit"
         disabled={registerMutation.isPending}
       >
         {registerMutation.isPending ? "Creating account..." : "Create Account"}

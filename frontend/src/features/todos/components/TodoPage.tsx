@@ -24,7 +24,7 @@ export function TodoPage() {
               <p className="text-sm text-muted-foreground">{user.email}</p>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={logout}>
+          <Button variant="ghost" size="sm" onClick={logout} data-testid="logout-button">
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>
@@ -36,7 +36,7 @@ export function TodoPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">My Todos</CardTitle>
-            <Button size="sm" onClick={() => setShowCreateForm(true)}>
+            <Button size="sm" onClick={() => setShowCreateForm(true)} data-testid="add-todo-button">
               <Plus className="h-4 w-4 mr-1" />
               Add Todo
             </Button>

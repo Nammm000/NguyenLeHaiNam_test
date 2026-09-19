@@ -74,6 +74,7 @@ export function TodoForm({ mode, todo, open, onClose }: TodoFormProps) {
             <Input
               id="title"
               placeholder="What needs to be done?"
+              data-testid="todo-title-input"
               {...register("title")}
             />
             {errors.title && (
@@ -88,6 +89,7 @@ export function TodoForm({ mode, todo, open, onClose }: TodoFormProps) {
             <Input
               id="description"
               placeholder="Add details..."
+              data-testid="todo-description-input"
               {...register("description")}
             />
             {errors.description && (
@@ -105,7 +107,7 @@ export function TodoForm({ mode, todo, open, onClose }: TodoFormProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" data-testid="todo-submit" disabled={isPending}>
               {isPending
                 ? mode === "create"
                   ? "Creating..."
