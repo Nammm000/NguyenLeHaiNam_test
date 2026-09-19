@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
+import { clearAccessToken, setAccessToken } from "@/lib/tokenStore";
 
 interface LoginRequest {
   email: string;
@@ -14,7 +15,6 @@ interface RegisterRequest {
 
 interface TokenResponse {
   access_token: string;
-  refresh_token: string;
   token_type: string;
 }
 
@@ -25,8 +25,8 @@ export function useLogin() {
       return response.data;
     },
     onSuccess: (data) => {
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      // The refresh token arrives as an HttpOnly cookie handled by the browser
+      setAccessToken(data.access_token);
     },
   });
 }
@@ -38,8 +38,7 @@ export function useRegister() {
       return response.data;
     },
     onSuccess: (data) => {
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      setAccessToken(data.access_token);
     },
   });
 }
@@ -50,11 +49,17 @@ export function useLogout() {
       await api.post("/auth/logout");
     },
     onSuccess: () => {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      clearAccessToken();
       queryClient.clear();
     },
   });
+}
+
+export async function refreshSession(): Promise<TokenResponse> {
+  const response = await api.post("/auth/refresh");
+  const data: TokenResponse = response.data;
+  setAccessToken(data.access_token);
+  return data;
 }
 
 interface UserResponse {

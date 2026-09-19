@@ -61,6 +61,7 @@ export function TodoItem({
         data-testid="todo-toggle"
         checked={todo.completed}
         onCheckedChange={() => onToggle(todo)}
+        className="rounded-md data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 data-[state=checked]:text-white dark:data-[state=checked]:border-green-600 dark:data-[state=checked]:bg-green-600 dark:data-[state=checked]:text-white"
       />
 
       <div className="flex-1 min-w-0">
