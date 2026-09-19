@@ -62,6 +62,8 @@ export function useUpdateTag() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tags"] });
+      // Cached todo lists embed tag chips.
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
       toast.success("Tag updated");
     },
     onError: () => {
