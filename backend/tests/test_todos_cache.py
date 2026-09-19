@@ -76,6 +76,14 @@ async def test_cache_keys_are_user_scoped(
     assert response_b.json()["total"] == 0
 
 
+def test_cache_key_distinguishes_literal_all_keyword():
+    # A keyword of "all" must not share the no-keyword cache entry.
+    user_id = uuid.uuid4()
+    with_keyword = build_list_cache_key(user_id, 1, 20, None, None, "all", None, None)
+    without_keyword = build_list_cache_key(user_id, 1, 20, None, None, None, None, None)
+    assert with_keyword != without_keyword
+
+
 async def test_create_invalidates_list_cache(
     client: AsyncClient, auth_headers_a: dict, user_a: User, redis_store: dict
 ):

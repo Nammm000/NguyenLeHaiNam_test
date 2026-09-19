@@ -50,7 +50,7 @@ def build_list_cache_key(
         f"todos:list:{user_id}:p{page}:n{page_size}"
         f":st={status_filter or 'all'}"
         f":tag={tag_id or 'any'}"
-        f":kw={keyword or 'all'}"
+        f":kw={keyword or ''}"
         f":df={date_from or 'all'}"
         f":dt={date_to or 'all'}"
     )
